@@ -1,5 +1,6 @@
 import pandas
 
+
 def format_rating_records_data(data_to_format) -> list:
     """" Returns a list of dictionaries with the tournaments information """
     get_rating_records = data_to_format.get("ratingRecords")
@@ -46,6 +47,7 @@ class ChessData:
         # Add player id on the dictionary event
         event["student_id"] = self.player_id
 
+        # Get the structure flat
         data_to_upload = [
             {**dic, **event}
             for dic in ratings
