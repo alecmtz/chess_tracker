@@ -1,16 +1,32 @@
+import time
 from chess_api import ChessAPI
 from google_sheets import GoogleSheets
 from chess_data import ChessData
 
 # Initialize google sheets
 gs = GoogleSheets()
-student_id = gs.get_student_ids()[0]  # Get single student for testing
+student_ids = gs.get_student_ids()  # Get 2 students for testing
+print(f"Student ids: {student_ids}")
 
-# Call us chess org
+# Initialize chess org api
 api = ChessAPI()
-tournament_data = api.get_tournament_data(player_id=student_id)
 
-chess_data = ChessData(chess_data=tournament_data, days=1, player_id=student_id)
-data_to_upload = chess_data.get_data_to_upload()
-gs.update_tournament_sheet(data_to_upload=data_to_upload)
+# Extract data from US Chess
+all_raw_data = []
+for chess_id in student_ids:
+    # Call the api to get the data
+    tournament_data = api.get_tournament_data(player_id=chess_id)
+    print(f"Data extracted for: {chess_id}")
+    # time.sleep(1)
+    all_raw_data.append((chess_id, tournament_data))
+
+# Transform data
+all_formatted = [
+    ChessData(chess_data=data, player_id=chess_id).get_data_to_upload()
+    for chess_id, data in all_raw_data
+    ]
+
+flat = [item for sublist in all_formatted for item in sublist]
+print(flat)
+gs.update_tournament_sheet(data_to_upload=flat)
 

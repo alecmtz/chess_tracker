@@ -1,4 +1,3 @@
-import pandas
 
 
 def format_rating_records_data(data_to_format) -> list:
@@ -23,11 +22,10 @@ def format_event_data(data_to_format) -> dict:
 
 class ChessData:
 
-    def __init__(self, chess_data, player_id, days):
-        self.count = days
+    def __init__(self, chess_data, player_id):
         self.player_id = player_id
-        self.data = chess_data.get("items")[:self.count][0]  # Slice the list and send it as a dictionary
-        self.rating_records = format_rating_records_data(self.data)  # Returns a list with 50 items
+        self.data = chess_data.get("items")[0]  # Get the last tournament played
+        self.rating_records = format_rating_records_data(self.data)
         self.event_records = format_event_data(self.data)
         self.data_to_upload = self.organize_data()
 
@@ -40,7 +38,7 @@ class ChessData:
     def get_data_to_upload(self):
         return self.data_to_upload
 
-    def organize_data(self):
+    def organize_data(self) -> list:
         ratings = self.get_rating_records()
         event = self.get_event_info()
 
@@ -48,11 +46,26 @@ class ChessData:
         event["student_id"] = self.player_id
 
         # Get the structure flat
-        data_to_upload = [
+        flat_the_data = [
             {**dic, **event}
             for dic in ratings
             ]
-        return data_to_upload
+
+        # Only grab keys of interest
+        data = []
+        for dictionary in flat_the_data:
+            build_list = [
+                dictionary["student_id"],
+                dictionary["endDate"],
+                dictionary["stateCode"],
+                dictionary["name"],
+                dictionary["sectionName"],
+                dictionary["ratingSource"],
+                dictionary["preRating"],
+                dictionary["postRating"],
+            ]
+            data.append(build_list)
+        return data
 
 
 

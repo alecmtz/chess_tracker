@@ -34,23 +34,10 @@ class GoogleSheets:
         # Get today's date
         self.today = dt.date.today()
 
-    def update_tournament_sheet(self, data_to_upload):
+    def update_tournament_sheet(self, data_to_upload: list):
         """" Creates new sheet with new tournament data """
-        final_list = []
-        for dictionary in data_to_upload:
-            new_list = [
-                dictionary["student_id"],
-                dictionary["endDate"],
-                dictionary["stateCode"],
-                dictionary["name"],
-                dictionary["sectionName"],
-                dictionary["ratingSource"],
-                dictionary["preRating"],
-                dictionary["postRating"],
-            ]
-            final_list.append(new_list)
-        tournament_sheet = self.create_new_tournament_sheet(rows_of_data=final_list)
-        tournament_sheet.append_rows(final_list)
+        tournament_sheet = self.create_new_tournament_sheet(rows_of_data=data_to_upload)
+        tournament_sheet.append_rows(data_to_upload)
         print("Data was uploaded successfully")
 
     def create_new_tournament_sheet(self, rows_of_data):
