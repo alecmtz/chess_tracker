@@ -45,11 +45,13 @@ class ChessData:
         # Add player id on the dictionary event
         event["student_id"] = self.player_id
 
-        # Get the structure flat
+        # Combine ratings and event into a single dictionary
         flat_the_data = [
             {**dic, **event}
             for dic in ratings
             ]
+
+        print(f"flat the data: {flat_the_data}")
 
         # Only grab keys of interest
         data = []
@@ -65,6 +67,8 @@ class ChessData:
                 dictionary["postRating"],
             ]
             data.append(build_list)
+
+        print(f"return data: {data}")
         return data
 
 
