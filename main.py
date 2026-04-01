@@ -13,32 +13,44 @@ print(f"Student ids: {student_ids}")
 api = ChessAPI()
 
 # Extract data from US Chess
-one_week_ago = datetime.today() - timedelta(weeks=1)
-all_raw_data = []
+one_week_ago = str(datetime.today().date() - timedelta(weeks=1))
+print(f"2 week ago: {one_week_ago}")
+last_weekend_tournaments = []
+player_tournament_data = []
+keys_of_interest = {"endDate", "stateCode", "name", "ratingSource", "preRating", "postRating", "studentId"}
+
 for chess_id in student_ids:
     # Call the api to get the data
     tournament_data = api.get_tournament_data(player_id=chess_id)
-    print(f"Data extracted for: {chess_id}")
     # time.sleep(1)
 
-    # Get tournament date
-    tournament_date = datetime.strptime(tournament_data.get("items")[0].get("endDate"), "%Y-%m-%d")
+    # Get tournament data
+    t_data = tournament_data.get("items")  # This is a list with dictionaries
+    # print(f"t_data: {t_data}")
 
-    # Compare date with a week ago
-    if tournament_date >= one_week_ago:
-        all_raw_data.append((chess_id, tournament_data))
-
-print(f"raw data: {all_raw_data}")
-# Transform data - this returns 3 nested arrays
-all_formatted = [
-    ChessData(chess_data=data, player_id=chess_id).get_data_to_upload()
-    for chess_id, data in all_raw_data # I need to extract this values from the list to pass the to ChessData
+    last_weekend_tournaments = [
+        {key: value for key, value in tournament.items()}
+        for tournament in t_data
+        if tournament.get("endDate") >= one_week_ago
     ]
+    # print(f"last weekend tournament data: {last_weekend_tournaments}")
+    player_tournament_data.append((last_weekend_tournaments, chess_id))  # FIX - appends empty [], 123456
+    # print(f"player tournament: {player_tournament_data}")
 
-print(f"all formated: {all_formatted}")
 
-# Simplify structure as 2 nested arrays for google upload to work
-flat = [item for sublist in all_formatted for item in sublist]
-print(flat)
-gs.update_tournament_sheet(data_to_upload=flat)
+# Transform data - this returns 3 nested arrays
+transform_data = []
+for data in player_tournament_data:  # I need to extract this values from the list to pass to ChessData
+    print(f"data in transform phase: {data}")
+    transform_data.append(ChessData(chess_data=data[0], player_id=data[1]).get_data_to_upload())
+
+flat_data = [
+    item for sublist in transform_data for item in sublist
+]
+
+print(flat_data)
+
+
+# upload to work
+gs.update_tournament_sheet(data_to_upload=flat_data)
 

@@ -37,13 +37,13 @@ class GoogleSheets:
     def update_tournament_sheet(self, data_to_upload: list):
         """" Creates new sheet with new tournament data """
         tournament_sheet = self.create_new_tournament_sheet(rows_of_data=data_to_upload)
+        print(f"upload data: {data_to_upload}")
         tournament_sheet.append_rows(data_to_upload)
         print("Data was uploaded successfully")
 
     def create_new_tournament_sheet(self, rows_of_data):
         """" Creates a new tournament sheet with today's date and returns it """
         len_data = len(rows_of_data) + 10  # Added 10 for extra buffering
-        print(f"Len of rows: {len_data}")
         tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today}", rows=len_data, cols=NUM_COLUMNS)
         tournament_sheet.append_row(COLUMN_TITLES)
         print(f"New sheet has been created with today's date: {self.today}")
