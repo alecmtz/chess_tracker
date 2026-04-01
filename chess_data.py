@@ -1,69 +1,76 @@
-
-def format_tournament_data(data_to_format, player_id) -> list:
-    tournament_data = []
-    keys_of_interest = {"studentId", "endDate", "stateCode", "name", "sectionName",
-                        "ratingSource", "preRating", "postRating"}
-
-    # Get dictionaries
-    for tournament in data_to_format:
-
-        # Get data of interest
-        rating_records = tournament.get("ratingRecords")
-        event_info = tournament.get("event")
-
-        # Add player id and section name information into the dictionary
-        event_info["studentId"] = player_id
-        event_info["sectionName"] = tournament.get("sectionName")
-
-        # Combine the rating records and event info into a single dictionary with all the keys
-        for one_record in rating_records:
-            combine = {**one_record, **event_info}
-
-            # Add it to the list only with the keys of interest
-            tournament_data.append({key: value for key, value in combine.items() if key in keys_of_interest})
-
-    return tournament_data
-
-
 class ChessData:
 
-    def __init__(self, chess_data, player_id):
-        self.player_id = player_id
-        # self.player_id = 123456
-        self.data = chess_data  # Pass all tournaments as a list
-        # self.data = [{'id': '01KMDV79DBSYVYFQPV18QJ5ZBP', 'sectionNumber': 1, 'sectionName': 'Gold', 'startDate': '2026-03-21', 'endDate': '2026-03-21', 'format': 'Swiss', 'ratingSystem': 'D', 'ratingRecords': [{'eventId': '01KMDV79DBTCZFH4VSA4QJJCXQ', 'sectionNumber': 1, 'preRating': 2070, 'preRatingDecimal': 2069.64, 'postRating': 2076, 'postRatingDecimal': 2076.23, 'ratingSource': 'R'}, {'eventId': '01KMDV79DBTCZFH4VSA4QJJCXQ', 'sectionNumber': 1, 'preRating': 1865, 'preRatingDecimal': 1864.92, 'postRating': 1882, 'postRatingDecimal': 1881.86, 'ratingSource': 'Q'}], 'event': {'id': '202603210453', 'name': 'Evanston 3x3 3/21/2026', 'startDate': '2026-03-21', 'endDate': '2026-03-21', 'stateCode': 'IL'}}, {'id': '01KKQH9YN2JTQT9E67DX8NGFCQ', 'sectionNumber': 1, 'sectionName': 'Open', 'startDate': '2026-03-14', 'endDate': '2026-03-14', 'format': 'Swiss', 'ratingSystem': 'D', 'ratingRecords': [{'eventId': '01KKQH9YMWPSY2A6Z4SXQB4FCX', 'sectionNumber': 1, 'preRating': 2085, 'preRatingDecimal': 2084.89, 'postRating': 2070, 'postRatingDecimal': 2069.64, 'ratingSource': 'R'}, {'eventId': '01KKQH9YMWPSY2A6Z4SXQB4FCX', 'sectionNumber': 1, 'preRating': 1875, 'preRatingDecimal': 1874.64, 'postRating': 1865, 'postRatingDecimal': 1864.92, 'ratingSource': 'Q'}], 'event': {'id': '202603140963', 'name': 'March $1,000 Open 2026', 'startDate': '2026-03-14', 'endDate': '2026-03-14', 'stateCode': 'WI'}}]
+    KEYS_OF_INTEREST = {"studentId", "endDate", "stateCode", "name", "sectionName", "ratingSource", "preRating",
+                        "postRating"}
 
-        self.tournament_data = format_tournament_data(self.data, self.player_id)
-        self.data_to_upload = self.organize_data()
+    def __init__(self, chess_data: list, player_id: int):
+        """
+        Args:
+            chess_data: List of raw tournament dicts returned from the US Chess API.
+            player_id: The US Chess member ID for this player.
+        """
+        self.player_id = player_id
+        self.data = chess_data  # Pass all tournaments as a list of dictionaries
+        self.tournament_data = self._format_tournament_data(self.data, self.player_id)
+        self.data_to_upload = self._organize_data()
 
     def get_tournament_data(self):
+        """Returns the formatted list of tournament dicts with keys of interest."""
         return self.tournament_data
 
     def get_data_to_upload(self):
+        """Returns the final 2D list of tournament rows ready for upload to Google Sheets."""
         return self.data_to_upload
 
-    def organize_data(self) -> list:
-        t_data = self.get_tournament_data()
-        final_list = []
+    def _organize_data(self) -> list:
+        """
+        Converts the list of tournament dicts into ordered rows for upload.
 
-        for t in t_data:
-            prepare_data = [
-                t.get("studentId"),
-                t.get("endDate"),
-                t.get("stateCode"),
-                t.get("name"),
-                t.get("sectionName"),
-                t.get("ratingSource"),
-                t.get("preRating"),
-                t.get("postRating"),
-            ]
-            final_list.append(prepare_data)
+        Each row is a flat list of values in column order with keys stripped out.
 
-        return final_list
+        Returns:
+            A 2D list where each inner list represents one tournament row.
+        """
+        ordered_keys = ["studentId", "endDate", "stateCode", "name", "sectionName", "ratingSource", "preRating",
+                        "postRating"]
 
+        return [[tournament.get(k) for k in ordered_keys] for tournament in self.get_tournament_data()]
 
-# chess = ChessData()
-# d = chess.get_data_to_upload()
-# print(d)
+    @staticmethod
+    def _format_tournament_data(data_to_format: list, player_id: int) -> list:
+        """
+        Flattens raw API tournament data into a list of dicts containing only keys of interest.
+
+        For each tournament, merges event info and each rating record into a single dict,
+        then filters to KEYS_OF_INTEREST. Tournaments with multiple rating records
+        (e.g. Regular + Quick) produce one dict per record.
+
+        Args:
+            data_to_format: Raw list of tournament dicts from the US Chess API.
+            player_id: The US Chess member ID to attach to each record.
+
+        Returns:
+            A list of flat dicts, one per rating record, containing only KEYS_OF_INTEREST.
+        """
+        tournament_data = []
+
+        # Get dictionaries
+        for tournament in data_to_format:
+
+            # Get event and rating information
+            rating_records = tournament.get("ratingRecords")
+            # Create a copy of event info and add player id and section name
+            event_info = {**tournament.get("event"), "studentId": player_id,
+                          "sectionName": tournament.get("sectionName")}
+
+            # Combine the rating records and event info into a single dictionary with all the keys
+            for one_record in rating_records:
+                combine = {**one_record, **event_info}
+
+                # Add it to the list only with the keys of interest
+                tournament_data.append({key: value for key, value in combine.items()
+                                        if key in ChessData.KEYS_OF_INTEREST})
+
+        return tournament_data
 
 
