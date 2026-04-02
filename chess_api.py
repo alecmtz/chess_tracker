@@ -4,11 +4,18 @@ from requests import RequestException
 
 
 class ChessAPI:
+    """
+    Client for the US Chess ratings API.
+
+    Fetches tournament section data for individual players with built-in
+    retry logic for rate limit responses.
+    """
     DEFAULT_SIZE = 10
     TIMEOUT = 10
     SLEEP = 5
 
     def __init__(self):
+        """ Initializes the client with the US Chess ratings API base URL """
         self.base_url = "https://ratings-api.uschess.org/api/v1/members/"
 
     def get_tournament_data(self, player_id: int, retries: int = 3) -> dict | None:
@@ -36,7 +43,7 @@ class ChessAPI:
                 time.sleep(ChessAPI.SLEEP)
                 retries -= 1
                 if retries == 0:
-                    print(f"Max number of retries reached")
+                    print(f"Max number of retries reached for player {player_id}")
                     return None
                 return self.get_tournament_data(player_id, retries)  # retry
             print(f"Request failed for player {player_id}: {error}")
@@ -49,6 +56,15 @@ class ChessAPI:
             return res
 
     @staticmethod
-    def _is_empty(data):
+    def _is_empty(data: dict) -> bool:
+        """
+        Checks whether the API response contains no tournament data.
+
+        Args:
+            data: The parsed JSON response from the API.
+
+        Returns:
+            True if the items list is missing or empty, False otherwise.
+        """
         return len(data.get("items", [])) == 0
 

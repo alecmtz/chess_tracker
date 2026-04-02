@@ -1,4 +1,11 @@
 class ChessData:
+    """
+    Transforms raw US Chess API tournament data for a single player into
+    a structured format ready for upload to Google Sheets.
+
+    Handles merging of event info and rating records, filtering to relevant
+    fields, and ordering values into upload-ready rows.
+    """
 
     KEYS_OF_INTEREST = {"studentId", "endDate", "stateCode", "name", "sectionName", "ratingSource", "preRating",
                         "postRating"}
@@ -14,11 +21,11 @@ class ChessData:
         self.tournament_data = self._format_tournament_data(self.data, self.player_id)
         self.data_to_upload = self._organize_data()
 
-    def get_tournament_data(self):
+    def get_tournament_data(self) -> list:
         """Returns the formatted list of tournament dicts with keys of interest."""
         return self.tournament_data
 
-    def get_data_to_upload(self):
+    def get_data_to_upload(self) -> list:
         """Returns the final 2D list of tournament rows ready for upload to Google Sheets."""
         return self.data_to_upload
 
