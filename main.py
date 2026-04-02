@@ -4,53 +4,59 @@ from chess_api import ChessAPI
 from google_sheets import GoogleSheets
 from chess_data import ChessData
 
-# Initialize google sheets
-gs = GoogleSheets()
-student_ids = gs.get_student_ids()  # Get 2 students for testing
-print(f"Student ids: {student_ids}")
 
-# Initialize chess org api
-api = ChessAPI()
+def main():
+    # Initialize google sheets and chess org
+    gs = GoogleSheets()
+    api = ChessAPI()
 
-# Extract data from US Chess
-one_week_ago = str(datetime.today().date() - timedelta(weeks=1))
-print(f"2 week ago: {one_week_ago}")
-last_weekend_tournaments = []
-player_tournament_data = []
-keys_of_interest = {"endDate", "stateCode", "name", "ratingSource", "preRating", "postRating", "studentId"}
+    # Initialize arrays
+    player_tournament_data = []
+    transform_data = []
 
-for chess_id in student_ids:
-    # Call the api to get the data
-    tournament_data = api.get_tournament_data(player_id=chess_id)
-    # time.sleep(1)
+    # STEP 1: Extract data
+    # Get student ids from Google sheets
+    student_ids = gs.get_student_ids()[:3]  # Get 2 students for testing
+    print(f"Student ids: {student_ids}")
 
-    # Get tournament data
-    t_data = tournament_data.get("items")  # This is a list with dictionaries
-    # print(f"t_data: {t_data}")
+    # Get one week worth of tournament data
+    one_week_ago = str(datetime.today().date() - timedelta(weeks=1))
 
-    last_weekend_tournaments = [
-        {key: value for key, value in tournament.items()}
-        for tournament in t_data
-        if tournament.get("endDate") >= one_week_ago
+    # Go over each student
+    for player_id in student_ids:
+        # Call the api
+        tournament_data = api.get_tournament_data(player_id=player_id)
+        # time.sleep(1)
+
+        # Check that data is not empty
+        if tournament_data is not None:
+            # Get tournament data
+            t_data = tournament_data.get("items")  # This is a list with dictionaries
+
+            # Only get last week
+            last_weekend_tournaments = [
+                tournament
+                for tournament in t_data
+                if tournament.get("endDate") >= one_week_ago
+            ]
+
+            # Add tournament data with the student's id
+            player_tournament_data.append((last_weekend_tournaments, player_id))
+
+    # Step 2: Transform data
+    # This returns 3 nested arrays
+    for player_data in player_tournament_data:  # Get values from the list to pass to ChessData
+        transform_data.append(ChessData(chess_data=player_data[0], player_id=player_data[1]).get_data_to_upload())
+
+    # Convert to 2D array for Google sheets
+    flat_data = [
+        item for sublist in transform_data for item in sublist
     ]
-    # print(f"last weekend tournament data: {last_weekend_tournaments}")
-    player_tournament_data.append((last_weekend_tournaments, chess_id))  # FIX - appends empty [], 123456
-    # print(f"player tournament: {player_tournament_data}")
+
+    # Step 3: Load data
+    # Upload to google sheets
+    gs.update_tournament_sheet(data_to_upload=flat_data)
 
 
-# Transform data - this returns 3 nested arrays
-transform_data = []
-for data in player_tournament_data:  # I need to extract this values from the list to pass to ChessData
-    print(f"data in transform phase: {data}")
-    transform_data.append(ChessData(chess_data=data[0], player_id=data[1]).get_data_to_upload())
-
-flat_data = [
-    item for sublist in transform_data for item in sublist
-]
-
-print(flat_data)
-
-
-# upload to work
-gs.update_tournament_sheet(data_to_upload=flat_data)
-
+if __name__ == "__main__":
+    main()
