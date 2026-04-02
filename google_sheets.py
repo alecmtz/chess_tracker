@@ -71,7 +71,7 @@ class GoogleSheets:
         else:
             # Create duplicate with today's date
             print(f"Warning: A sheet for {self.today} already exists. Creating duplicate '{self.today} (1)'. If you"
-                  f"run it again I will crash :).")
+                  f" run it again I will crash :)")
             tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today} (1)", rows=len_data,
                                                               cols=GoogleSheets.NUM_COLUMNS)
         tournament_sheet.append_row(GoogleSheets.COLUMN_TITLES)
