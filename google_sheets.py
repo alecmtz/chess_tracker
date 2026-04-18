@@ -12,7 +12,8 @@ class GoogleSheets:
     and writing tournament results to dated worksheet tabs.
     """
 
-    SPREADSHEET_ID = "1PuM3GgFI9z6B0_WU3itMjzDcihk5C1KaT1i0CXIXI7E"
+    SPREADSHEET_ID = "1hRZVdgr9-ZpqMh7dhc0q4ndqBBJT7Uhbo-PV0K570U4"
+    SERVICE_ACCOUNT = "service_account_key.json"
     STUDENT_WORKSHEET = "Student Information"
     NUM_COLUMNS = 8
     COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section", "Rating System",
@@ -24,7 +25,7 @@ class GoogleSheets:
         the main spreadsheet and student worksheet.
         """
         # Get access to google account
-        self.gc = gspread.service_account(filename="service_account.json")
+        self.gc = gspread.service_account(filename=GoogleSheets.SERVICE_ACCOUNT)
 
         # Get the sheets
         self.spreadsheet = self.gc.open_by_key(GoogleSheets.SPREADSHEET_ID)  # Fetch the main spreadsheet
@@ -106,5 +107,4 @@ class GoogleSheets:
         # Clean columns
         df.columns = df.columns.str.lower().str.replace(" ", "_").str.replace("-", "_")
         return df
-
 

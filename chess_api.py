@@ -10,13 +10,14 @@ class ChessAPI:
     Fetches tournament section data for individual players with built-in
     retry logic for rate limit responses.
     """
+    BASE_URL = "https://ratings-api.uschess.org/api/v1/members/"
     DEFAULT_SIZE = 10
     TIMEOUT = 10
     SLEEP = 5
 
     def __init__(self):
         """ Initializes the client with the US Chess ratings API base URL """
-        self.base_url = "https://ratings-api.uschess.org/api/v1/members/"
+        self.base_url = ChessAPI.BASE_URL
 
     def get_tournament_data(self, player_id: int, retries: int = 3) -> dict | None:
         """
