@@ -26,7 +26,7 @@ def main():
 
     # STEP 1: Extract data
     # Get student ids from Google sheets
-    student_ids = gs.get_student_ids()
+    student_ids = gs.get_student_ids()[:10]
     len_student_ids = len(student_ids)
     print(f"Number of player id's from google sheet: {len_student_ids}")
 
@@ -91,10 +91,10 @@ def main():
                 writer.writerow([player_id])
         print(f"Missing IDs exported to missing_ids_{today}.csv")
 
-        elapsed = time.time() - start
-        minutes = int(elapsed // 60)
-        seconds = int(elapsed % 60)
-        print(f"Total runtime: {minutes}m {seconds}s")
+    elapsed = time.time() - start
+    minutes = int(elapsed // 60)
+    seconds = int(elapsed % 60)
+    print(f"Total runtime: {minutes}m {seconds}s")
 
 
 if __name__ == "__main__":
