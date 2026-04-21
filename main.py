@@ -26,7 +26,7 @@ def main():
 
     # STEP 1: Extract data
     # Get student ids from Google sheets
-    student_ids = gs.get_student_ids()[:10]
+    student_ids = gs.get_student_ids()
     len_student_ids = len(student_ids)
     print(f"Number of player id's from google sheet: {len_student_ids}")
 
