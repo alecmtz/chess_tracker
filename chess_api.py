@@ -19,7 +19,7 @@ class ChessAPI:
         """ Initializes the client with the US Chess ratings API base URL """
         self.base_url = ChessAPI.BASE_URL
 
-    def get_tournament_data(self, player_id: int, retries: int = 3) -> dict | None:
+    def get_tournament_data(self, player_id: int, retries: int = 3, max_retries: int = 3) -> dict | None:
         """
         Fetches tournament section data for a given player from the US Chess ratings API.
 
@@ -41,12 +41,12 @@ class ChessAPI:
             response.raise_for_status()
         except RequestException as error:
             if error.response is not None and error.response.status_code == 429:  # hitting rate limit
-                time.sleep(ChessAPI.SLEEP)
+                time.sleep(ChessAPI.SLEEP * (2 ** (max_retries - retries)))
                 retries -= 1
                 if retries == 0:
                     print(f"Max number of retries reached for player {player_id}")
                     return None
-                return self.get_tournament_data(player_id, retries)  # retry
+                return self.get_tournament_data(player_id, retries, max_retries)  # retry
             print(f"Request failed for player {player_id}: {error}")
             return None
         else:
