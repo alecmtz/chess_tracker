@@ -12,8 +12,8 @@ class GoogleSheets:
     and writing tournament results to dated worksheet tabs.
     """
 
-    SPREADSHEET_ID = "1hRZVdgr9-ZpqMh7dhc0q4ndqBBJT7Uhbo-PV0K570U4"
-    SERVICE_ACCOUNT = "service_account_key.json"
+    SPREADSHEET_ID = "1PuM3GgFI9z6B0_WU3itMjzDcihk5C1KaT1i0CXIXI7E"
+    SERVICE_ACCOUNT = "service_account_susan.json"
     STUDENT_WORKSHEET = "Student Information"
     NUM_COLUMNS = 8
     COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section", "Rating System",

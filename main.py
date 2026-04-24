@@ -6,13 +6,9 @@ from google_sheets import GoogleSheets
 from chess_data import ChessData
 
 
-def main():
+def get_tournament_data(gs, api):
     # Start timer
     start = time.time()
-
-    # Initialize google sheets and chess org
-    gs = GoogleSheets()
-    api = ChessAPI()
 
     # Initialize arrays
     player_tournament_data = []
@@ -95,6 +91,15 @@ def main():
     minutes = int(elapsed // 60)
     seconds = int(elapsed % 60)
     print(f"Total runtime: {minutes}m {seconds}s")
+
+
+def main():
+
+    # Initialize google sheets and chess org
+    google_sheets = GoogleSheets()
+    chess_pi = ChessAPI()
+
+    get_tournament_data(gs=google_sheets, api=chess_pi)
 
 
 if __name__ == "__main__":
