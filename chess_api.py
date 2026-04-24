@@ -10,14 +10,16 @@ class ChessAPI:
     Fetches tournament section data for individual players with built-in
     retry logic for rate limit responses.
     """
-    BASE_URL = "https://ratings-api.uschess.org/api/v1/members/"
+    BASE_ENDPOINT = "https://ratings-api.uschess.org/api/v1/"
+    MEMBERS_ENDPOINT = "members/"
+    TOP_PLAYERS_ENDPOINT = "top-players/Regular"
     DEFAULT_SIZE = 10
     TIMEOUT = 10
     SLEEP = 5
 
     def __init__(self):
         """ Initializes the client with the US Chess ratings API base URL """
-        self.base_url = ChessAPI.BASE_URL
+        self.base_endpoint = ChessAPI.BASE_ENDPOINT
 
     def get_tournament_data(self, player_id: int, retries: int = 3, max_retries: int = 3) -> dict | None:
         """
@@ -35,7 +37,8 @@ class ChessAPI:
             or None if the request fails, the player has no data, or retries are exhausted.
         """
 
-        url = f"{self.base_url}{player_id}/sections?Offset=0&Size={ChessAPI.DEFAULT_SIZE}"
+        url = (f"{self.base_endpoint}{ChessAPI.MEMBERS_ENDPOINT}"
+               f"{player_id}/sections?Offset=0&Size={ChessAPI.DEFAULT_SIZE}")
         try:
             response = requests.get(url, timeout=ChessAPI.TIMEOUT)  # raises timeout after 10 seconds
             response.raise_for_status()
