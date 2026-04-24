@@ -18,8 +18,6 @@ def get_tournament_data(gs, api):
     count = 0
     unknown_ids = []
 
-    print("\n****************** WELCOME TO THE LIFE OF AUTOMATION.. ENJOY THE RIDE ******************\n")
-
     # STEP 1: Extract data
     # Get student ids from Google sheets
     student_ids = gs.get_student_ids()
@@ -94,12 +92,25 @@ def get_tournament_data(gs, api):
 
 
 def main():
+    print("\n****************** WELCOME TO THE LIFE OF AUTOMATION ******************\n")
 
     # Initialize google sheets and chess org
     google_sheets = GoogleSheets()
     chess_pi = ChessAPI()
 
-    get_tournament_data(gs=google_sheets, api=chess_pi)
+    done = False
+    while not done:
+        user_answer = input("Type 'tournament' or '100' (top-100) or 'exit': ").lower()
+
+        if user_answer == 'tournament':
+            get_tournament_data(gs=google_sheets, api=chess_pi)
+            done = True
+        elif user_answer == '100':
+            done = True
+        elif user_answer == 'exit':
+            done = True
+        else:
+            print("Whooops.. try again. Please type 'tournament' or '100'")
 
 
 if __name__ == "__main__":
