@@ -60,7 +60,7 @@ class ChessAPI:
                 return None
             return res
 
-    def get_top_players(self, retries: int = 3, max_retries: int = 3):
+    def get_top_players(self, age: int, retries: int = 3, max_retries: int = 3):
         url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}14"
 
         try:

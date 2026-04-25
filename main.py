@@ -7,23 +7,37 @@ from chess_data import ChessData
 
 
 def get_top_players(gs, api):
-    ages = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
+    ages = ["14", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
 
     # Get students ids from Google Sheets
     student_ids = gs.get_student_ids()
-    top_players_data = api.get_top_players().get("topPlayers")
-    print("Regular 14 data:")
 
-    top_players_ids = [
-        int(dictionary.get("id")) for dictionary in top_players_data
-    ]
+    for age in ages[:1]:
+        # Get the 100 players list
+        top_players_data = api.get_top_players(age=age).get("topPlayers")
 
-    top_students = [
-        player_id for player_id in top_players_ids if player_id in student_ids
-    ]
+        # Get id's with their ordinal for later lookup
+        id_with_ordinal = {
+            player["id"]: player["ordinal"] for player in top_players_data
+        }
 
-    print(top_students)
+        # Extract only the ids for comparison
+        top_players_ids = [
+            int(dictionary.get("id")) for dictionary in top_players_data
+        ]
 
+        print(top_players_ids)
+
+        # Search for students in the top 100
+        top_students = [
+            player_id for player_id in top_players_ids if player_id in student_ids
+        ]
+
+        top_students_with_ordinal = {
+            student: id_with_ordinal.get(str(student)) for student in top_students
+        }
+
+        print(top_students_with_ordinal)
 
 
 
