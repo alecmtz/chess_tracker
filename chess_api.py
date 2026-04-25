@@ -61,7 +61,7 @@ class ChessAPI:
             return res
 
     def get_top_players(self, age: int, retries: int = 3, max_retries: int = 3):
-        url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}14"
+        url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}{age}"
 
         try:
             response = requests.get(url, timeout=ChessAPI.TIMEOUT)  # raises timeout after 10 seconds
@@ -71,15 +71,15 @@ class ChessAPI:
                 time.sleep(ChessAPI.SLEEP * (2 ** (max_retries - retries)))
                 retries -= 1
                 if retries == 0:
-                    print(f"Max number of retries reached for Regular 14")
+                    print(f"Max number of retries reached for Regular {age}")
                     return None
                 return self.get_top_players(retries, max_retries)  # retry
-            print(f"Request failed for Regular 14: {error}")
+            print(f"Request failed for Regular {age}: {error}")
             return None
         else:
             res = response.json()
             if len(res.get("topPlayers", [])) == 0:
-                print(f"No information found for top-100 Regular 14. Skipping ...")
+                print(f"No information found for top-100 Regular {age}. Skipping ...")
                 return None
             return res
 

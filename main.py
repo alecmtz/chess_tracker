@@ -7,7 +7,7 @@ from chess_data import ChessData
 
 
 def get_top_players(gs, api):
-    ages = ["14", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
+    ages = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
 
     # Get students ids from Google Sheets
     student_ids = gs.get_student_ids()
@@ -16,34 +16,13 @@ def get_top_players(gs, api):
         # Get the 100 players list
         top_players_data = api.get_top_players(age=age).get("topPlayers")
 
-        # Get id's with their ordinal for later lookup
-        id_with_ordinal = {
-            player["id"]: player["ordinal"] for player in top_players_data
-        }
+        # Space out requests
+        time.sleep(0.2)
 
-        # Extract only the ids for comparison
-        top_players_ids = [
-            int(dictionary.get("id")) for dictionary in top_players_data
-        ]
+        chess_data = ChessData(top_players_data=(top_players_data, age), player_id=student_ids)
+        final_list_top_players = chess_data.get_top_players()
 
-        print(top_players_ids)
-
-        # Search for students in the top 100
-        top_students = [
-            player_id for player_id in top_players_ids if player_id in student_ids
-        ]
-
-        top_students_with_ordinal = {
-            student: id_with_ordinal.get(str(student)) for student in top_students
-        }
-
-        print(top_students_with_ordinal)
-
-        to_list = [
-            [value, key, age] for key, value in top_students_with_ordinal.items()
-        ]
-        print(to_list)
-        gs.update_top_player_sheet(data_to_upload=to_list)
+        gs.update_top_player_sheet(data_to_upload=final_list_top_players)
 
 
 def get_tournament_data(gs, api):

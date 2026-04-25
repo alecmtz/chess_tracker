@@ -13,20 +13,53 @@ class ChessData:
                                "ratingSource", "preRating", "postRating"]
     TOP_PLAYERS_KEYS_OF_INTEREST = {"studentId", "ordinal"}
 
-    def __init__(self, tournament_data: list = None, top_players_data: list = None, player_id: int = None):
+    def __init__(self, player_id: int | list, tournament_data: list = None, top_players_data: tuple = None):
         """
         Args:
             tournament_data: List of raw tournament dicts returned from the US Chess API.
-            player_id: The US Chess member ID for this player.
+            player_id: The US Chess member ID for this player or a list of IDS.
         """
         self.player_id = player_id
         # Pass all tournaments as a list of dictionaries [{}, {}, {}]
         self.tournament_data = self._format_tournament_data(tournament_data,
                                                             self.player_id) if tournament_data else None
+        self.top_players_data = top_players_data if top_players_data else None
 
     def get_tournament_data(self) -> list:
         """Returns the formatted list of tournament dicts with keys of interest."""
         return self.tournament_data
+
+    def get_top_players(self):
+        return self._find_top_players()
+
+    def _find_top_players(self):
+        top_players = self.top_players_data[0]
+        age_category = self.top_players_data[1]
+
+        # Create a catalog only with ids and their ordinal for later lookup
+        id_with_ordinal = {
+            player["id"]: player["ordinal"] for player in top_players
+        }
+
+        # Extract only the ids for comparison
+        top_players_ids = [
+            int(dictionary.get("id")) for dictionary in top_players
+        ]
+
+        # Search for students in the top 100
+        top_students = [
+            player_id for player_id in top_players_ids if player_id in self.player_id
+        ]
+
+        # Find the students ordinal
+        top_students_with_ordinal = {
+            student: id_with_ordinal.get(str(student)) for student in top_students
+        }
+
+        # Prepare data and add age category to the list
+        return [
+            [value, key, age_category] for key, value in top_students_with_ordinal.items()
+        ]
 
     def _format_tournament_data(self, data_to_format: list, player_id: int) -> list:
         # @TODO: fix docstrings
@@ -64,9 +97,8 @@ class ChessData:
                                         if key in ChessData.TOURNAMENT_KEYS_OF_INTEREST})
 
             # Organize data for upload
-            tournament_data = self._organize_data(data=tournament_data, ordered_keys=ChessData.TOURNAMENT_ORDERED_KEYS)
+            return self._organize_data(data=tournament_data, ordered_keys=ChessData.TOURNAMENT_ORDERED_KEYS)
 
-        return tournament_data
 
     @staticmethod
     def _organize_data(ordered_keys: list, data: list) -> list:
