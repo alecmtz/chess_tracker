@@ -6,23 +6,51 @@ from google_sheets import GoogleSheets
 from chess_data import ChessData
 
 
+def flat_data(data: list):
+    # Convert to 2D array for Google sheets
+    return [
+        item for sublist in data for item in sublist
+    ]
+
+
 def get_top_players(gs, api):
-    ages = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
+    final_list_top_players = []
+    ages = ["7andUnder", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]  # "Under21", "50Plus", "65Plus"]
+    completed = 0
+    not_completed = 0
 
     # Get students ids from Google Sheets
     student_ids = gs.get_student_ids()
 
-    for age in ages[:1]:
+    for age in ages:
         # Get the 100 players list
-        top_players_data = api.get_top_players(age=age).get("topPlayers")
+        api_response = api.get_top_players(age=age)
 
-        # Space out requests
-        time.sleep(0.2)
+        if api_response is not None:
+            top_players_data = api_response.get("topPlayers")
 
-        chess_data = ChessData(top_players_data=(top_players_data, age), player_id=student_ids)
-        final_list_top_players = chess_data.get_top_players()
+            # Space out requests
+            time.sleep(0.2)
 
-        gs.update_top_player_sheet(data_to_upload=final_list_top_players)
+            chess_data = ChessData(top_players_data=(top_players_data, age), player_id=student_ids)
+            final_list_top_players.append(chess_data.get_top_players())
+
+            completed += 1
+            print(f"REGULAR {age} COMPLETED. {completed}/{len(ages)}")
+        else:
+            not_completed += 1
+            print(f"REGULAR {age} NOT COMPLETED. {not_completed}/{not_completed}")
+
+
+    print(final_list_top_players)
+
+    # Convert to 2D array for Google sheets
+    final_list_top_players = flat_data(final_list_top_players)
+
+    print(final_list_top_players)
+
+
+    gs.update_top_player_sheet(data_to_upload=final_list_top_players)
 
 
 def get_tournament_data(gs, api):
@@ -49,20 +77,20 @@ def get_tournament_data(gs, api):
     # Go over each student
     for player_id in student_ids:
         # Call the api
-        tournament_data = api.get_tournament_data(player_id=player_id)
+        api_response = api.get_tournament_data(player_id=player_id)
 
         # Space out requests
         time.sleep(0.2)
 
         # Check that data is not empty
-        if tournament_data is not None:
+        if api_response is not None:
             # Get tournament data
-            t_data = tournament_data.get("items")  # This is a list with dictionaries
+            tournament_data = api_response.get("items")  # This is a list with dictionaries
 
             # Only get last week, empty [] gets added when the condition is not met
             last_weekend_tournaments = [
                 tournament
-                for tournament in t_data
+                for tournament in tournament_data
                 if tournament.get("endDate") >= one_week_ago
             ]
 
@@ -83,13 +111,11 @@ def get_tournament_data(gs, api):
                                         player_id=player_data[1]).get_tournament_data())
 
     # Convert to 2D array for Google sheets
-    flat_data = [
-        item for sublist in transform_data for item in sublist
-    ]
+    final_tournament_list = flat_data(transform_data)
 
     # Step 3: Load data
     # Upload to google sheets
-    gs.update_tournament_sheet(data_to_upload=flat_data)
+    gs.update_tournament_sheet(data_to_upload=final_tournament_list)
 
     print("****************** END OF THE PROGRAM ******************\n")
     print("                   (Now a sassy dance)                   \n")
