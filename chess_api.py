@@ -17,7 +17,6 @@ class ChessAPI:
     DEFAULT_SIZE = 10
     TIMEOUT = 10
     SLEEP = 5
-    AGES = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
 
     def __init__(self):
         """ Initializes the client with the US Chess ratings API base URL """

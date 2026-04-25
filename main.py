@@ -7,11 +7,24 @@ from chess_data import ChessData
 
 
 def get_top_players(gs, api):
+    ages = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
+
     # Get students ids from Google Sheets
     student_ids = gs.get_student_ids()
-    top_players_data = api.get_top_players()
+    top_players_data = api.get_top_players().get("topPlayers")
     print("Regular 14 data:")
-    print(top_players_data)
+
+    top_players_ids = [
+        int(dictionary.get("id")) for dictionary in top_players_data
+    ]
+
+    top_students = [
+        player_id for player_id in top_players_ids if player_id in student_ids
+    ]
+
+    print(top_students)
+
+
 
 
 def get_tournament_data(gs, api):
