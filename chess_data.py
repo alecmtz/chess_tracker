@@ -7,8 +7,10 @@ class ChessData:
     fields, and ordering values into upload-ready rows.
     """
 
-    KEYS_OF_INTEREST = {"studentId", "endDate", "stateCode", "name", "sectionName", "ratingSource", "preRating",
-                        "postRating"}
+    TOURNAMENT_KEYS_OF_INTEREST = {"studentId", "endDate", "stateCode", "name", "sectionName",
+                                   "ratingSource", "preRating", "postRating"}
+    TOURNAMENT_ORDERED_KEYS = ["studentId", "endDate", "stateCode", "name", "sectionName",
+                               "ratingSource", "preRating", "postRating"]
 
     def __init__(self, chess_data: list, player_id: int):
         """
@@ -19,32 +21,13 @@ class ChessData:
         self.player_id = player_id
         self.data = chess_data  # Pass all tournaments as a list of dictionaries
         self.tournament_data = self._format_tournament_data(self.data, self.player_id)
-        self.data_to_upload = self._organize_data()
 
     def get_tournament_data(self) -> list:
         """Returns the formatted list of tournament dicts with keys of interest."""
         return self.tournament_data
 
-    def get_data_to_upload(self) -> list:
-        """Returns the final 2D list of tournament rows ready for upload to Google Sheets."""
-        return self.data_to_upload
-
-    def _organize_data(self) -> list:
-        """
-        Converts the list of tournament dicts into ordered rows for upload.
-
-        Each row is a flat list of values in column order with keys stripped out.
-
-        Returns:
-            A 2D list where each inner list represents one tournament row.
-        """
-        ordered_keys = ["studentId", "endDate", "stateCode", "name", "sectionName", "ratingSource", "preRating",
-                        "postRating"]
-
-        return [[tournament.get(k) for k in ordered_keys] for tournament in self.get_tournament_data()]
-
-    @staticmethod
-    def _format_tournament_data(data_to_format: list, player_id: int) -> list:
+    def _format_tournament_data(self, data_to_format: list, player_id: int) -> list:
+        # @TODO: fix docstrings
         """
         Flattens raw API tournament data into a list of dicts containing only keys of interest.
 
@@ -76,8 +59,29 @@ class ChessData:
 
                 # Add it to the list only with the keys of interest
                 tournament_data.append({key: value for key, value in combine.items()
-                                        if key in ChessData.KEYS_OF_INTEREST})
+                                        if key in ChessData.TOURNAMENT_KEYS_OF_INTEREST})
+
+            # Organize data for upload
+            tournament_data = self._organize_data(data=tournament_data, ordered_keys=ChessData.TOURNAMENT_ORDERED_KEYS)
 
         return tournament_data
+
+    @staticmethod
+    def _organize_data(ordered_keys: list, data: list) -> list:
+        """
+        Converts a list of dicts into ordered rows for upload.
+
+        Each row is a flat list of values in column order with keys stripped out.
+
+        Returns:
+            A 2D list where each inner list represents one data row.
+        """
+
+        return [
+            [
+                dictionary.get(k) for k in ordered_keys
+            ]
+            for dictionary in data
+        ]
 
 

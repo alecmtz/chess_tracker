@@ -1,5 +1,6 @@
 import time
 import requests
+import json
 from requests import RequestException
 
 
@@ -16,6 +17,7 @@ class ChessAPI:
     DEFAULT_SIZE = 10
     TIMEOUT = 10
     SLEEP = 5
+    AGES = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "21", "50", "65"]
 
     def __init__(self):
         """ Initializes the client with the US Chess ratings API base URL """
@@ -54,21 +56,33 @@ class ChessAPI:
             return None
         else:
             res = response.json()
-            if self._is_empty(data=res):
+            if len(res.get("items", [])) == 0:
                 print(f"No information found for member: {player_id}. Skipping ...")
                 return None
             return res
 
-    @staticmethod
-    def _is_empty(data: dict) -> bool:
-        """
-        Checks whether the API response contains no tournament data.
+    def get_top_players(self, retries: int = 3, max_retries: int = 3):
+        url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}14"
 
-        Args:
-            data: The parsed JSON response from the API.
+        try:
+            response = requests.get(url, timeout=ChessAPI.TIMEOUT)  # raises timeout after 10 seconds
+            response.raise_for_status()
+        except RequestException as error:
+            if error.response is not None and error.response.status_code == 429:  # hitting rate limit
+                time.sleep(ChessAPI.SLEEP * (2 ** (max_retries - retries)))
+                retries -= 1
+                if retries == 0:
+                    print(f"Max number of retries reached for Regular 14")
+                    return None
+                return self.get_top_players(retries, max_retries)  # retry
+            print(f"Request failed for Regular 14: {error}")
+            return None
+        else:
+            res = response.json()
+            if len(res.get("topPlayers", [])) == 0:
+                print(f"No information found for top-100 Regular 14. Skipping ...")
+                return None
+            return res
 
-        Returns:
-            True if the items list is missing or empty, False otherwise.
-        """
-        return len(data.get("items", [])) == 0
+
 

@@ -6,6 +6,14 @@ from google_sheets import GoogleSheets
 from chess_data import ChessData
 
 
+def get_top_players(gs, api):
+    # Get students ids from Google Sheets
+    student_ids = gs.get_student_ids()
+    top_players_data = api.get_top_players()
+    print("Regular 14 data:")
+    print(top_players_data)
+
+
 def get_tournament_data(gs, api):
     # Start timer
     start = time.time()
@@ -58,7 +66,8 @@ def get_tournament_data(gs, api):
     # Step 2: Transform data
     # This returns 3 nested arrays
     for player_data in player_tournament_data:  # Get values from the list to pass to ChessData
-        transform_data.append(ChessData(chess_data=player_data[0], player_id=player_data[1]).get_data_to_upload())
+        transform_data.append(ChessData(chess_data=player_data[0],
+                                        player_id=player_data[1]).get_tournament_data())
 
     # Convert to 2D array for Google sheets
     flat_data = [
@@ -106,6 +115,7 @@ def main():
             get_tournament_data(gs=google_sheets, api=chess_pi)
             done = True
         elif user_answer == '100':
+            get_top_players(gs=google_sheets, api=chess_pi)
             done = True
         elif user_answer == 'exit':
             done = True
