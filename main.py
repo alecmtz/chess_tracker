@@ -48,15 +48,17 @@ def get_tournament_data(gs, api):
             # Get tournament data
             t_data = tournament_data.get("items")  # This is a list with dictionaries
 
-            # Only get last week
+            # Only get last week, empty [] gets added when the condition is not met
             last_weekend_tournaments = [
                 tournament
                 for tournament in t_data
                 if tournament.get("endDate") >= one_week_ago
             ]
 
-            # Add tournament data with the student's id
-            player_tournament_data.append((last_weekend_tournaments, player_id))
+            # Add tournament data with the student's id and filter out empty [] to avoid a None crash in chess_data
+            if last_weekend_tournaments:
+                player_tournament_data.append((last_weekend_tournaments, player_id))
+
             count += 1
             print(f"COMPLETED: {count}/{len_student_ids}")
         else:
@@ -66,7 +68,7 @@ def get_tournament_data(gs, api):
     # Step 2: Transform data
     # This returns 3 nested arrays
     for player_data in player_tournament_data:  # Get values from the list to pass to ChessData
-        transform_data.append(ChessData(chess_data=player_data[0],
+        transform_data.append(ChessData(tournament_data=player_data[0],
                                         player_id=player_data[1]).get_tournament_data())
 
     # Convert to 2D array for Google sheets

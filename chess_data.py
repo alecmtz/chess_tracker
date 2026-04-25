@@ -11,16 +11,18 @@ class ChessData:
                                    "ratingSource", "preRating", "postRating"}
     TOURNAMENT_ORDERED_KEYS = ["studentId", "endDate", "stateCode", "name", "sectionName",
                                "ratingSource", "preRating", "postRating"]
+    TOP_PLAYERS_KEYS_OF_INTEREST = {"studentId", "ordinal"}
 
-    def __init__(self, chess_data: list, player_id: int):
+    def __init__(self, tournament_data: list = None, top_players_data: list = None, player_id: int = None):
         """
         Args:
-            chess_data: List of raw tournament dicts returned from the US Chess API.
+            tournament_data: List of raw tournament dicts returned from the US Chess API.
             player_id: The US Chess member ID for this player.
         """
         self.player_id = player_id
-        self.data = chess_data  # Pass all tournaments as a list of dictionaries
-        self.tournament_data = self._format_tournament_data(self.data, self.player_id)
+        # Pass all tournaments as a list of dictionaries [{}, {}, {}]
+        self.tournament_data = self._format_tournament_data(tournament_data,
+                                                            self.player_id) if tournament_data else None
 
     def get_tournament_data(self) -> list:
         """Returns the formatted list of tournament dicts with keys of interest."""
