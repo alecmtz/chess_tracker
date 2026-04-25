@@ -15,9 +15,11 @@ class GoogleSheets:
     SPREADSHEET_ID = "1PuM3GgFI9z6B0_WU3itMjzDcihk5C1KaT1i0CXIXI7E"
     SERVICE_ACCOUNT = "service_account_susan.json"
     STUDENT_WORKSHEET = "Student Information"
-    NUM_COLUMNS = 8
-    COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section", "Rating System",
+    TOURNAMENT_NUM_COLUMNS = 8
+    TOURNAMENT_COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section", "Rating System",
                      "Pre-Rating", "Post-Rating"]
+    TOP_100_COLUMN_TITLES = ["Position", "Student Id", "Age"]
+    TOP_100_NUM_COLUMNS = 3
 
     def __init__(self):
         """
@@ -46,6 +48,18 @@ class GoogleSheets:
         tournament_sheet.append_rows(data_to_upload)
         print("Data was uploaded successfully")
 
+    def update_top_player_sheet(self, data_to_upload: list) -> None:
+        """
+        Creates a new dated worksheet and uploads tournament rows to it.
+
+        Args:
+            data_to_upload: 2D list of tournament rows to append where each
+                            inner list corresponds to COLUMN_TITLES order.
+        """
+        tournament_sheet = self.create_new_top_player_sheet(rows_of_data=data_to_upload)
+        tournament_sheet.append_rows(data_to_upload)
+        print("Data was uploaded successfully")
+
     def create_new_tournament_sheet(self, rows_of_data: list) -> gspread.Worksheet:
         """
         Creates a new worksheet titled with today's date and adds column headers.
@@ -67,15 +81,37 @@ class GoogleSheets:
         except WorksheetNotFound:
             # Create a new worksheet with today's date
             tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today}", rows=len_data,
-                                                              cols=GoogleSheets.NUM_COLUMNS)
+                                                              cols=GoogleSheets.TOURNAMENT_NUM_COLUMNS)
             print(f"New sheet has been created with today's date: {self.today}")
         else:
             # Create duplicate with today's date
             print(f"Warning: A sheet for {self.today} already exists. Creating duplicate '{self.today} (1)'. If you"
                   f" run it again I will crash :)")
             tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today} (1)", rows=len_data,
-                                                              cols=GoogleSheets.NUM_COLUMNS)
-        tournament_sheet.append_row(GoogleSheets.COLUMN_TITLES)
+                                                              cols=GoogleSheets.TOURNAMENT_NUM_COLUMNS)
+        tournament_sheet.append_row(GoogleSheets.TOURNAMENT_COLUMN_TITLES)
+
+        return tournament_sheet
+
+    def create_new_top_player_sheet(self, rows_of_data: list) -> gspread.Worksheet:
+
+        len_data = len(rows_of_data) + 10  # Added 10 for extra buffering
+
+        try:
+            # Check if worksheet already exists
+            self.spreadsheet.worksheet(f"top-100 {self.today}")
+        except WorksheetNotFound:
+            # Create a new worksheet with today's date
+            tournament_sheet = self.spreadsheet.add_worksheet(title=f"top-100 {self.today}", rows=len_data,
+                                                              cols=GoogleSheets.TOP_100_NUM_COLUMNS)
+            print(f"New sheet has been created with today's date: {self.today}")
+        else:
+            # Create duplicate with today's date
+            print(f"Warning: A sheet for {self.today} already exists. Creating duplicate '{self.today} (1)'. If you"
+                  f" run it again I will crash :)")
+            tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today} (1)", rows=len_data,
+                                                              cols=GoogleSheets.TOP_100_NUM_COLUMNS)
+        tournament_sheet.append_row(GoogleSheets.TOP_100_COLUMN_TITLES)
 
         return tournament_sheet
 

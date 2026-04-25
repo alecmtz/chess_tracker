@@ -39,6 +39,11 @@ def get_top_players(gs, api):
 
         print(top_students_with_ordinal)
 
+        to_list = [
+            [value, key, age] for key, value in top_students_with_ordinal.items()
+        ]
+        print(to_list)
+        gs.update_top_player_sheet(data_to_upload=to_list)
 
 
 def get_tournament_data(gs, api):
