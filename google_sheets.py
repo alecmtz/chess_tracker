@@ -1,4 +1,5 @@
 import gspread
+import csv
 import datetime as dt
 import pandas as pd
 from gspread.exceptions import WorksheetNotFound
@@ -16,8 +17,8 @@ class GoogleSheets:
     SERVICE_ACCOUNT = "service_account_susan.json"
     STUDENT_WORKSHEET = "Student Information"
     TOURNAMENT_NUM_COLUMNS = 8
-    TOURNAMENT_COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section", "Rating System",
-                     "Pre-Rating", "Post-Rating"]
+    TOURNAMENT_COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section",
+                                "Rating System", "Pre-Rating", "Post-Rating"]
     TOP_100_COLUMN_TITLES = ["Position", "Student Id", "Age"]
     TOP_100_NUM_COLUMNS = 3
 
@@ -39,14 +40,20 @@ class GoogleSheets:
     def update_tournament_sheet(self, data_to_upload: list) -> None:
         """
         Creates a new dated worksheet and uploads tournament rows to it.
+        If anything fails, the rows are saved to a local CSV so the scrape isn't lost.
 
         Args:
             data_to_upload: 2D list of tournament rows to append where each
                             inner list corresponds to COLUMN_TITLES order.
         """
-        tournament_sheet = self.create_new_tournament_sheet(rows_of_data=data_to_upload)
-        tournament_sheet.append_rows(data_to_upload)
-        print("Data was uploaded successfully")
+        try:
+            tournament_sheet = self.create_new_tournament_sheet(rows_of_data=data_to_upload)
+            tournament_sheet.append_rows(data_to_upload)
+            print("Data was uploaded successfully")
+        except Exception as e:
+            backup_path = self._save_backup_csv(data_to_upload)
+            print(f"Upload failed: {e}")
+            print(f"Your data was saved to {backup_path}")
 
     def update_top_player_sheet(self, data_to_upload: list) -> None:
         """
@@ -121,8 +128,7 @@ class GoogleSheets:
 
     def get_student_ids(self) -> list:
         """ Returns a list of all student US Chess IDs from the Student Information sheet """
-        df = self.get_student_spreadsheet()
-        return df.get("student_id").to_list()
+        return self.get_student_spreadsheet().get("student_id").to_list()
 
     @staticmethod
     def _convert_to_df(datasheet) -> pd.DataFrame:
@@ -140,7 +146,17 @@ class GoogleSheets:
         # Convert into a dataframe
         df = pd.DataFrame(data=datasheet.get_all_records())
 
-        # Clean columns
+        # Clean columns (it really is just adding Student Name to student_name
         df.columns = df.columns.str.lower().str.replace(" ", "_").str.replace("-", "_")
         return df
+
+    @staticmethod
+    def _save_backup_csv(rows: list) -> str:
+        """ Writes rows to a timestamped CSV next to the script and returns its path. """
+        path = f"backup_{dt.datetime.now():%Y-%m-%d_%H%M%S}.csv"
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(GoogleSheets.TOURNAMENT_COLUMN_TITLES)
+            writer.writerows(rows)
+        return path
 
