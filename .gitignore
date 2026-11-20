@@ -1,10 +1,14 @@
 # Virtual environment
 venv/
 
+# Local data / backups
+data/
+
 # Secrets / credentials
 *.json
 *.env
 .env*
+!.env.example
 
 # IDE
 .idea

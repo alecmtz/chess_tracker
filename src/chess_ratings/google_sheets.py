@@ -2,6 +2,9 @@ import gspread
 import csv
 import datetime as dt
 import pandas as pd
+
+from paths import SECRETS_DIR, DATA_DIR
+from pathlib import Path
 from gspread.exceptions import WorksheetNotFound
 
 
@@ -14,7 +17,7 @@ class GoogleSheets:
     """
 
     SPREADSHEET_ID = "1PuM3GgFI9z6B0_WU3itMjzDcihk5C1KaT1i0CXIXI7E"
-    SERVICE_ACCOUNT = "service_account_susan.json"
+    SERVICE_ACCOUNT = SECRETS_DIR / "service_account_susan.json"
     STUDENT_WORKSHEET = "Student Information"
     TOURNAMENT_NUM_COLUMNS = 8
     TOURNAMENT_COLUMN_TITLES = ["Student Id", "Tournament End Date", "Tournament State", "Event", "Section",
@@ -37,7 +40,7 @@ class GoogleSheets:
         # Get today's date
         self.today = dt.date.today()
 
-    def update_tournament_sheet(self, data_to_upload: list) -> None:
+    def load_tournament_sheet(self, data_to_upload: list) -> None:
         """
         Creates a new dated worksheet and uploads tournament rows to it.
         If anything fails, the rows are saved to a local CSV so the scrape isn't lost.
@@ -55,7 +58,7 @@ class GoogleSheets:
             print(f"Upload failed: {e}")
             print(f"Your data was saved to {backup_path}")
 
-    def update_top_player_sheet(self, data_to_upload: list) -> None:
+    def load_top_player_sheet(self, data_to_upload: list) -> None:
         """
         Creates a new dated worksheet and uploads tournament rows to it.
 
@@ -93,7 +96,7 @@ class GoogleSheets:
         else:
             # Create duplicate with today's date
             print(f"Warning: A sheet for {self.today} already exists. Creating duplicate '{self.today} (1)'. If you"
-                  f" run it again I will crash :)")
+                  f" run it again today it will skip the Google Sheets upload and save the data to a backup CSV :)")
             tournament_sheet = self.spreadsheet.add_worksheet(title=f"{self.today} (1)", rows=len_data,
                                                               cols=GoogleSheets.TOURNAMENT_NUM_COLUMNS)
         tournament_sheet.append_row(GoogleSheets.TOURNAMENT_COLUMN_TITLES)
@@ -134,7 +137,6 @@ class GoogleSheets:
     def _convert_to_df(datasheet) -> pd.DataFrame:
         """
         Converts a gspread worksheet into a pandas DataFrame with cleaned column names.
-
         Column names are lowercased and spaces/hyphens replaced with underscores.
 
         Args:
@@ -151,9 +153,10 @@ class GoogleSheets:
         return df
 
     @staticmethod
-    def _save_backup_csv(rows: list) -> str:
+    def _save_backup_csv(rows: list) -> Path:
         """ Writes rows to a timestamped CSV next to the script and returns its path. """
-        path = f"backup_{dt.datetime.now():%Y-%m-%d_%H%M%S}.csv"
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        path = DATA_DIR / f"backup_{dt.datetime.now():%Y-%m-%d_%H%M%S}.csv"
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(GoogleSheets.TOURNAMENT_COLUMN_TITLES)

@@ -99,7 +99,6 @@ class ChessData:
             # Organize data for upload
             return self._organize_data(data=tournament_data, ordered_keys=ChessData.TOURNAMENT_ORDERED_KEYS)
 
-
     @staticmethod
     def _organize_data(ordered_keys: list, data: list) -> list:
         """

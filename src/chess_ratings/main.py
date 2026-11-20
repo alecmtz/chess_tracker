@@ -1,9 +1,16 @@
 import time
 import csv
+
 from datetime import datetime, timedelta
+from collections import Counter
+
 from chess_api import ChessAPI
 from google_sheets import GoogleSheets
 from chess_data import ChessData
+from progress_store import ProgressStore
+
+
+MAX_CONSECUTIVE_RATE_LIMITS = 5
 
 
 def flat_data(data: list):
@@ -21,6 +28,7 @@ def get_top_players(gs, api):
 
     # Get students ids from Google Sheets
     student_ids = gs.get_student_ids()
+    print(f"length of student ids: {len(student_ids)}")
 
     for age in ages:
         # Get the 100 players list
@@ -41,7 +49,6 @@ def get_top_players(gs, api):
             not_completed += 1
             print(f"REGULAR {age} NOT COMPLETED. {not_completed}/{not_completed}")
 
-
     print(final_list_top_players)
 
     # Convert to 2D array for Google sheets
@@ -49,12 +56,11 @@ def get_top_players(gs, api):
 
     print(final_list_top_players)
 
+    gs.load_top_player_sheet(data_to_upload=final_list_top_players)
 
-    gs.update_top_player_sheet(data_to_upload=final_list_top_players)
 
-
-def get_tournament_data(gs, api):
-    # Start timer
+def get_tournament_data(gs, api, store):
+    # Start timer -- just for fun/calculate the amount of time it takes for the program to run
     start = time.time()
 
     # Initialize arrays
@@ -65,9 +71,14 @@ def get_tournament_data(gs, api):
     count = 0
     unknown_ids = []
 
+    # Check if there's data to resume
+    saved = store.load()
+    if saved:
+        print(f"Resuming: {len(saved)} players already saved today {datetime.today().date()}")
+
     # STEP 1: Extract data
     # Get student ids from Google sheets
-    student_ids = gs.get_student_ids()
+    student_ids = gs.get_student_ids()[:9]
     len_student_ids = len(student_ids)
     print(f"Number of player id's from google sheet: {len_student_ids}")
 
@@ -76,15 +87,24 @@ def get_tournament_data(gs, api):
 
     # Go over each student
     for player_id in student_ids:
-        # Call the api
-        api_response = api.get_tournament_data(player_id=player_id)
 
-        # Space out requests
-        time.sleep(0.2)
+        # Load saved data
+        api_response = saved.get(player_id)
 
-        # Check that data is not empty
+        # If saved data is empty
+        if api_response is None:
+            # Call the api
+            api_response = api.get_tournament_data(player_id=player_id)
+            # If we get data back from the API save on disk immediately
+            if api_response is not None:
+                store.save(player_id, api_response)
+                saved[player_id] = api_response
+
+        # If saved data is NOT empty
         if api_response is not None:
-            # Get tournament data
+            print("Saved data: processing existing ID.")
+
+            # Grab the existing data - get tournament data
             tournament_data = api_response.get("items")  # This is a list with dictionaries
 
             # Only get last week, empty [] gets added when the condition is not met
@@ -102,7 +122,7 @@ def get_tournament_data(gs, api):
             print(f"COMPLETED: {count}/{len_student_ids}")
         else:
             unknown_ids.append(player_id)
-            print(f"NOT COMPLETED: {len(unknown_ids)}")
+            # print(f"NOT COMPLETED: {len(unknown_ids)}")
 
     # Step 2: Transform data
     # This returns 3 nested arrays
@@ -115,23 +135,27 @@ def get_tournament_data(gs, api):
 
     # Step 3: Load data
     # Upload to google sheets
-    gs.update_tournament_sheet(data_to_upload=final_tournament_list)
+    gs.load_tournament_sheet(data_to_upload=final_tournament_list)
 
     print("****************** END OF THE PROGRAM ******************\n")
     print("                   (Now a sassy dance)                   \n")
 
     today = datetime.today().date()
     if unknown_ids:
+        reasons = Counter(api.failed.get(player_id, "unknown") for player_id in unknown_ids)
+        summary = ", ".join(f"{n} {reason}" for reason, n in reasons.items())
+
         print("**************** REPORT FOR MISSING IDS ****************\n")
-        print(f"Missing data for {len(unknown_ids)} IDs:")
+        print(f"Missing data for {len(unknown_ids)} IDs ({summary})")
 
         with open(f"missing_ids_{today}.csv", "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["player_id"])
+            writer.writerow(["player_id", "reason"])
             for player_id in unknown_ids:
                 print(f"Missing: {player_id}")
-                writer.writerow([player_id])
+                writer.writerow([player_id, api.failed.get(player_id, "unknown")])
         print(f"Missing IDs exported to missing_ids_{today}.csv")
+        print("Run again later to retry only the missing IDs. :D")
 
     elapsed = time.time() - start
     minutes = int(elapsed // 60)
@@ -146,12 +170,17 @@ def main():
     google_sheets = GoogleSheets()
     chess_pi = ChessAPI()
 
+    # new code
+    store = ProgressStore()
+
+    user_answer = "tournament"
+
     done = False
     while not done:
-        user_answer = input("Type 'tournament' or '100' (top-100) or 'exit': ").lower()
+        # user_answer = input("Type 'tournament' or '100' (top-100) or 'exit': ").lower()
 
         if user_answer == 'tournament':
-            get_tournament_data(gs=google_sheets, api=chess_pi)
+            get_tournament_data(gs=google_sheets, api=chess_pi, store=store)
             done = True
         elif user_answer == '100':
             get_top_players(gs=google_sheets, api=chess_pi)
