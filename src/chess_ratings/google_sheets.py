@@ -40,21 +40,18 @@ class GoogleSheets:
         # Get today's date
         self.today = dt.date.today()
 
-    def load_tournament_sheet(self, data_to_upload: list) -> None:
-        """
-        Creates a new dated worksheet and uploads tournament rows to it.
-        If anything fails, the rows are saved to a local CSV so the scrape isn't lost.
-
-        Args:
-            data_to_upload: 2D list of tournament rows to append where each
-                            inner list corresponds to COLUMN_TITLES order.
-        """
+    def load_tournament_data(self, df: pd.DataFrame) -> None:
+        rows = []
         try:
-            tournament_sheet = self.create_new_tournament_sheet(rows_of_data=data_to_upload)
-            tournament_sheet.append_rows(data_to_upload)
+            # Copy df then convert df to list
+            df = df.copy()
+            rows = df.astype(object).where(df.notna(), "").values.tolist()
+
+            tournament_sheet = self.create_new_tournament_sheet(rows_of_data=rows)
+            tournament_sheet.append_rows(rows)
             print("Data was uploaded successfully")
         except Exception as e:
-            backup_path = self._save_backup_csv(data_to_upload)
+            backup_path = self._save_backup_csv(rows)
             print(f"Upload failed: {e}")
             print(f"Your data was saved to {backup_path}")
 
@@ -129,9 +126,10 @@ class GoogleSheets:
         """ Returns the Student Information worksheet as a cleaned pandas DataFrame """
         return self._convert_to_df(self.student_sheet)
 
-    def get_student_ids(self) -> list:
+    def get_students(self) -> pd.DataFrame:
         """ Returns a list of all student US Chess IDs from the Student Information sheet """
-        return self.get_student_spreadsheet().get("student_id").to_list()
+        # return self.get_student_spreadsheet().get("student_id").to_list()
+        return self.get_student_spreadsheet()
 
     @staticmethod
     def _convert_to_df(datasheet) -> pd.DataFrame:

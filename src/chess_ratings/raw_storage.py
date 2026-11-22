@@ -1,22 +1,23 @@
 import json
 
 from paths import DATA_DIR
-from datetime import date
 from pathlib import Path
 
 
-class ProgressStore:
+class RawStorage:
     """Appends each fetched player to a JSONL (JSON Lines: one JSON object per line) file."""
 
     def __init__(self, path: str | None = None):
-        self.path = Path(path or DATA_DIR / f"progress_{date.today()}.jsonl")
+        self.path = Path(path or DATA_DIR / f"progress_2026-11-19.jsonl")# f"progress_{date.today()}.jsonl")
 
     def load(self) -> dict:
         """Returns {player_id: api_response} for everything saved so far."""
         saved = {}
+        count = 0
         if self.path.exists():
             with self.path.open(encoding="utf-8") as f:
                 for line in f:
+                    count += 1
                     line = line.strip()
                     if not line:  # Need to check what's up
                         continue
@@ -26,6 +27,8 @@ class ProgressStore:
                         continue  # half-written last line after a hard stop
                         # loading the full API response
                     saved[record["player_id"]] = record["data"]
+                    # if count == 1:
+                    #     break
         return saved
 
     def save(self, player_id: int, data: dict) -> None:

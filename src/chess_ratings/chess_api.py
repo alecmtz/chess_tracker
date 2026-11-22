@@ -19,7 +19,7 @@ class ChessAPI:
     MAX_ATTEMPTS = 5
     BASE_DELAY = 5  # seconds before the first retry; doubles each time
     MAX_DELAY = 120  # cap on any single wait
-    REQUEST_INTERVAL = 1  # polite pause before every request
+    REQUEST_INTERVAL = 0.5  # polite pause before every request
     RATE_LIMITED = "rate limited (retries exhausted)"
 
     def __init__(self):
@@ -79,11 +79,14 @@ class ChessAPI:
     def get_top_players(self, age: int) -> dict | None:
         url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}{age}"
         response = self._get(url, label=f"top players Regular {age}")
+
         if response is None:
             return None
+
         res = response.json()
         if not res.get("topPlayers"):
             self.failed[f"top players Regular {age}"] = "no data found"
             print(f"No information found for top-100 Regular {age}. Skipping ...")
             return None
         return res
+
