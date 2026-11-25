@@ -9,7 +9,7 @@ class RawStorage:
     """Appends each fetched record to a per-section JSONL (JSON Lines) file."""
 
     def __init__(self, section: str):
-        self.path = DATA_DIR / f"progress_{date.today()}_{section}.jsonl"
+        self.path = DATA_DIR / f"progress_{date.today()}_{section}.jsonl"  # f"progress_2026-11-19.jsonl"
 
     def load(self) -> dict:
         """Returns {player_id: api_response} for everything saved so far."""
@@ -33,16 +33,18 @@ class RawStorage:
                     saved[record["category"]] = record["data"]
         return saved
 
-    def save(self, data: dict, player_id: int | None = None, category: str | None = None) -> None:
+    def save(self, data: dict | None, player_id: int | None = None, category: str | None = None) -> None:
         """Appends one record. Reopening each time means it's on disk immediately."""
         # Save the raw API response data
-        record = {"data": data}
+        record = {}
 
         if player_id is not None:
             record["player_id"] = player_id
 
         if category is not None:
             record["category"] = category
+
+        record["data"] = data
 
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")

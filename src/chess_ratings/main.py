@@ -61,8 +61,10 @@ def call_us_chess_data(raw_data: RawStorage, data_request: str, student_ids: lis
                 count += 1
                 print(f"COMPLETED: {count}/{len_student_ids}")
             else:
+                raw_data.save(player_id=player_id, data=None)
                 unknown_ids.append(player_id)
                 print(f"NOT COMPLETED: {len(unknown_ids)}")
+
     elif data_request == "100":
         for age in AGES:
             print(f"Currently getting: {age}")
@@ -97,31 +99,33 @@ def main():
             if user_answer == "tournament":
                 # Check if there's existing data before calling API
                 updated_ids = get_updated_ids(ids=student_ids, raw_data=raw_data)
+
+                # Update the student list
                 if updated_ids:
-                    call_us_chess_data(data_request=user_answer, student_ids=updated_ids, raw_data=raw_data)
+                    student_ids = updated_ids
 
             call_us_chess_data(data_request=user_answer, student_ids=student_ids, raw_data=raw_data)
 
             # ---------------- STEP 2: Load / Transform Data ----------------
-            # # Load data
-            # saved_data = get_load_data()
-            #
-            # # Transform raw data into a dataframe
-            # df = transform.to_dataframe(saved_data=saved_data, section=user_answer)
-            #
-            # # Get last week tournament data
-            # df = transform.filter_recent(df=df, days=8)
-            # print(df)
-            #
-            # # ---------------- Step 3: Load data ----------------
-            # # Upload to google sheets
-            # google_sheets.load_tournament_data(df=df)
-            #
-            # # ---------------- Stop Timer ----------------
-            # elapsed = time.time() - start
-            # minutes = int(elapsed // 60)
-            # seconds = int(elapsed % 60)
-            # print(f"Total runtime: {minutes}m {seconds}s")
+            # Load data
+            saved_data = raw_data.load()
+
+            # Transform raw data into a dataframe
+            df = transform.to_dataframe(saved_data=saved_data, section=user_answer)
+
+            # Get last week tournament data
+            df = transform.filter_recent(df=df, days=7)
+            print(df)
+
+            # ---------------- Step 3: Load data ----------------
+            # Upload to google sheets
+            google_sheets.load_tournament_data(df=df)
+
+            # ---------------- Stop Timer ----------------
+            elapsed = time.time() - start
+            minutes = int(elapsed // 60)
+            seconds = int(elapsed % 60)
+            print(f"Total runtime: {minutes}m {seconds}s")
 
         else:
             print("Whooops.. try again. Please type 'tournament' or '100'")
