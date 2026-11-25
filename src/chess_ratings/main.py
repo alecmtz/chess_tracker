@@ -38,6 +38,11 @@ def get_updated_ids(ids: list, raw_data: RawStorage):
     return student_ids
 
 
+def get_top_100_data(raw_data: RawStorage):
+    # Load data
+    data = raw_data.load()
+
+
 def call_us_chess_data(raw_data: RawStorage, data_request: str, student_ids: list):  # (data_request: str | None, ids: list | None):
     count = 0
     unknown_ids = []
@@ -59,15 +64,14 @@ def call_us_chess_data(raw_data: RawStorage, data_request: str, student_ids: lis
                 unknown_ids.append(player_id)
                 print(f"NOT COMPLETED: {len(unknown_ids)}")
     elif data_request == "100":
-        for age in AGES[:1]:
+        for age in AGES:
+            print(f"Currently getting: {age}")
             # Call the API
             api_response = chess_api.get_top_players(age=age)
 
-            print(api_response)
-            print("\n" * 20)
-
             if api_response is not None:
-                raw_data.save(data=api_response)
+                print(f"Saving the API data response for: {age}")
+                raw_data.save(category=age, data=api_response)
 
 
 def main():
@@ -90,17 +94,18 @@ def main():
             # Fetch student IDS
             student_ids = get_student_ids(gs=google_sheets)
 
-            # Check if there's existing data before calling API
-            updated_ids = get_updated_ids(ids=student_ids, raw_data=raw_data)
-            if updated_ids:
-                call_us_chess_data(data_request=user_answer, student_ids=updated_ids, raw_data=raw_data)
+            if user_answer == "tournament":
+                # Check if there's existing data before calling API
+                updated_ids = get_updated_ids(ids=student_ids, raw_data=raw_data)
+                if updated_ids:
+                    call_us_chess_data(data_request=user_answer, student_ids=updated_ids, raw_data=raw_data)
 
             call_us_chess_data(data_request=user_answer, student_ids=student_ids, raw_data=raw_data)
 
             # ---------------- STEP 2: Load / Transform Data ----------------
-            # Load data
+            # # Load data
             # saved_data = get_load_data()
-
+            #
             # # Transform raw data into a dataframe
             # df = transform.to_dataframe(saved_data=saved_data, section=user_answer)
             #

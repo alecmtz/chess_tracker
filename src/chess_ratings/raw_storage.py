@@ -26,14 +26,23 @@ class RawStorage:
                     record = json.loads(line)
                 except json.JSONDecodeError:
                     continue  # half-written last line after a hard stop
-                saved[record["player_id"]] = record["data"]
+
+                if record.get("player_id") is not None:
+                    saved[record["player_id"]] = record["data"]
+                else:
+                    saved[record["category"]] = record["data"]
         return saved
 
-    def save(self, data: dict, player_id: int | None = None) -> None:
+    def save(self, data: dict, player_id: int | None = None, category: str | None = None) -> None:
         """Appends one record. Reopening each time means it's on disk immediately."""
+        # Save the raw API response data
         record = {"data": data}
+
         if player_id is not None:
             record["player_id"] = player_id
+
+        if category is not None:
+            record["category"] = category
 
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")

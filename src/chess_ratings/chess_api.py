@@ -76,7 +76,7 @@ class ChessAPI:
 
         return res
 
-    def get_top_players(self, age: int) -> dict | None:
+    def get_top_players(self, age: str) -> dict | None:
         url = f"{self.base_endpoint}{ChessAPI.TOP_PLAYERS_ENDPOINT}{age}"
         response = self._get(url, label=f"top players Regular {age}")
 
